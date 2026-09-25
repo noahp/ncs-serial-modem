@@ -21,6 +21,11 @@ extern bool sm_nrf_cloud_ready;
 /* Whether to send the device's location to nRF Cloud. */
 extern bool sm_nrf_cloud_send_location;
 
+/* PDN ID of the nRF Cloud CoAP connection (0: default PDN), as set by the last AT#XNRFCLOUD
+ * connect. #XNRFCLOUDFOTA reuses this for its own download socket.
+ */
+extern uint16_t sm_nrf_cloud_pdn_id;
+
 /**
  * @brief Callback invoked on completion of an async NCELLMEAS run.
  *

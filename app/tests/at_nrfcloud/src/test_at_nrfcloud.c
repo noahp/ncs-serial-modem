@@ -140,7 +140,8 @@ void tearDown(void)
 
 void helper_xnrfcloud_connect_ok(void)
 {
-	/* nrfcloud_conn_work_fn calls nrf_cloud_coap_connect(NULL). */
+	/* nrfcloud_conn_work_fn calls nrf_cloud_coap_pdn_id_set() then nrf_cloud_coap_connect(NULL). */
+	__cmock_nrf_cloud_coap_pdn_id_set_ExpectAnyArgs();
 	__cmock_nrf_cloud_coap_connect_ExpectAnyArgsAndReturn(0);
 	send_at_command("AT#XNRFCLOUD=1\r\n");
 	k_sleep(K_MSEC(1));
@@ -181,7 +182,7 @@ void test_xnrfcloud_test_cmd(void)
 {
 	send_at_command("AT#XNRFCLOUD=?\r\n");
 	resp = get_captured_response();
-	TEST_ASSERT_NOT_NULL(strstr(resp, "#XNRFCLOUD: (0,1,2),<send_location>\r\n\r\nOK\r\n"));
+	TEST_ASSERT_NOT_NULL(strstr(resp, "#XNRFCLOUD: (0,1,2),<send_location>,<pdn_id>\r\n\r\nOK\r\n"));
 }
 
 /*
@@ -219,6 +220,7 @@ void test_xnrfcloud_connect_ok(void)
  */
 void test_xnrfcloud_connect_with_send_location(void)
 {
+	__cmock_nrf_cloud_coap_pdn_id_set_ExpectAnyArgs();
 	__cmock_nrf_cloud_coap_connect_ExpectAnyArgsAndReturn(0);
 
 	send_at_command("AT#XNRFCLOUD=1,1\r\n");

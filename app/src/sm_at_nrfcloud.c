@@ -26,9 +26,11 @@ static char nrfcloud_device_id[NRF_CLOUD_CLIENT_ID_MAX_LEN];
 
 bool sm_nrf_cloud_ready;
 bool sm_nrf_cloud_send_location;
+uint16_t sm_nrf_cloud_pdn_id;
 /* Parameters saved before submitting connection work. */
 static bool nrfcloud_connect;
 static bool nrfcloud_conn_send_location;
+static uint16_t nrfcloud_conn_pdn_id;
 
 static void nrfcloud_conn_work_fn(struct k_work *work);
 K_WORK_DEFINE(nrfcloud_conn_work, nrfcloud_conn_work_fn);
@@ -181,6 +183,7 @@ static void nrfcloud_conn_work_fn(struct k_work *work)
 
 	if (nrfcloud_connect) {
 		LOG_DBG("Connecting to nRF Cloud.");
+		nrf_cloud_coap_pdn_id_set(nrfcloud_conn_pdn_id);
 		err = nrf_cloud_coap_connect(NULL);
 		if (err) {
 			LOG_ERR("Cloud connection failed, error: %d", err);
@@ -189,6 +192,7 @@ static void nrfcloud_conn_work_fn(struct k_work *work)
 			return;
 		}
 		sm_nrf_cloud_send_location = nrfcloud_conn_send_location;
+		sm_nrf_cloud_pdn_id = nrfcloud_conn_pdn_id;
 		/* A-GNSS & P-GPS needs date_time, trigger to update current time */
 		date_time_update_async(date_time_event_handler);
 		if (k_sem_take(&sem_date_time, K_SECONDS(10)) != 0) {
@@ -220,6 +224,7 @@ STATIC int handle_at_nrf_cloud(enum at_parser_cmd_type cmd_type, struct at_parse
 	int err = -EINVAL;
 	uint16_t op;
 	uint16_t send_location = 0;
+	uint16_t pdn_id = 0;
 
 	switch (cmd_type) {
 	case AT_PARSER_CMD_TYPE_SET:
@@ -241,9 +246,16 @@ STATIC int handle_at_nrf_cloud(enum at_parser_cmd_type cmd_type, struct at_parse
 					return err;
 				}
 			}
+			if (param_count > 3) {
+				err = at_parser_num_get(parser, 3, &pdn_id);
+				if (err < 0) {
+					return err;
+				}
+			}
 
 			nrfcloud_connect = true;
 			nrfcloud_conn_send_location = send_location;
+			nrfcloud_conn_pdn_id = pdn_id;
 			sm_k_work_submit_blocking(&nrfcloud_conn_work);
 			err = 0;
 		} else if (op == SM_NRF_CLOUD_SEND && sm_nrf_cloud_ready) {
@@ -267,7 +279,7 @@ STATIC int handle_at_nrf_cloud(enum at_parser_cmd_type cmd_type, struct at_parse
 	} break;
 
 	case AT_PARSER_CMD_TYPE_TEST:
-		rsp_send("\r\n#XNRFCLOUD: (%d,%d,%d),<send_location>\r\n",
+		rsp_send("\r\n#XNRFCLOUD: (%d,%d,%d),<send_location>,<pdn_id>\r\n",
 			SM_NRF_CLOUD_DISCONNECT, SM_NRF_CLOUD_CONNECT, SM_NRF_CLOUD_SEND);
 		err = 0;
 		break;

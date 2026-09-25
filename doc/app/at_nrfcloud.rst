@@ -33,8 +33,9 @@ The set command allows you to access the nRF Cloud service.
 
 .. note::
 
-   The ``#XNRFCLOUD`` command uses default PDN connection with ID ``0``.
-   Raw sockets must not use the PDN connection at the same time.
+   By default, the ``#XNRFCLOUD`` connection uses the PDN connection with ID ``0``.
+   Use the ``<pdn_id>`` parameter to select a different PDN.
+   Raw sockets must not use the same PDN connection at the same time.
    See :ref:`SM_AT_SOCKET_RAW_SOCKET_LIMITATION` for more information.
 
 Syntax
@@ -42,7 +43,7 @@ Syntax
 
 ::
 
-   AT#XNRFCLOUD=<op>[,<send_location>]
+   AT#XNRFCLOUD=<op>[,<send_location>[,<pdn_id>]]
 
 The parameters and their defined values are the following:
 
@@ -64,6 +65,12 @@ The parameters and their defined values are the following:
       The location is sent to the nRF Cloud whenever a fix is produced by the GNSS module.
       You must use the :ref:`#XGNSS <SM_AT_GNSS>` AT command to start GNSS either in single-fix or periodic navigation mode.
       The interval between fixes must be at least 5 seconds.
+
+<pdn_id>
+   Used only when the value of ``<op>`` is ``1``.
+   The Packet Data Network (PDN) ID to use for the nRF Cloud CoAP connection, instead of the
+   default PDN. The connection is shared by ``#XNRFCLOUDPOS`` and the ``#XNRFCLOUDOBS*`` commands.
+   The default value is ``0`` (the default PDN), used if the parameter is omitted.
 
 Unsolicited notification
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -185,7 +192,7 @@ Example
 
   AT#XNRFCLOUD=?
 
-  #XNRFCLOUD: (0,1,2),<send_location>
+  #XNRFCLOUD: (0,1,2),<send_location>,<pdn_id>
 
   OK
 
@@ -963,6 +970,9 @@ The parameters and their defined values are the following:
    String.
    For ``<op>=1`` and ``<op>=4`` it overrides the application project key (``CONFIG_MEMFAULT_PROJECT_KEY``), and for ``<op>=2`` and ``<op>=6`` it overrides :ref:`CONFIG_SM_NRF_CLOUD_FOTA_MODEM_PROJECT_KEY <CONFIG_SM_NRF_CLOUD_FOTA_MODEM_PROJECT_KEY>`, for this check.
    If this option is not provided and the corresponding Kconfig setting is unset, the request will target the default project where the device was claimed.
+
+The firmware download reuses the PDN of the already-connected ``#XNRFCLOUD`` CoAP connection; see
+its ``<pdn_id>`` parameter to use a PDN other than the default.
 
 The command returns ``OK`` immediately and the check runs asynchronously.
 When it completes, an unsolicited notification is sent.

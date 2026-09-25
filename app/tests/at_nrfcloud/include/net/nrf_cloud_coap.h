@@ -108,6 +108,7 @@ struct nrf_cloud_coap_location_request {
  * ----------------------------------------------------------------------
  */
 int nrf_cloud_coap_init(void);
+void nrf_cloud_coap_pdn_id_set(int pdn_id);
 int nrf_cloud_coap_connect(const char *const app_ver);
 int nrf_cloud_coap_disconnect(void);
 int nrf_cloud_coap_location_get(struct nrf_cloud_coap_location_request const *const request,

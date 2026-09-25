@@ -16,6 +16,7 @@
 #include "sm_util.h"
 #include "sm_at_host.h"
 #include "sm_at_fota.h"
+#include "sm_at_nrfcloud.h"
 #include "sm_settings.h"
 
 LOG_MODULE_REGISTER(sm_nrfcloud_fota, CONFIG_SM_LOG_LEVEL);
@@ -82,6 +83,11 @@ static void nrfcloud_fota_check_failed(int rv)
 static void nrfcloud_fota_check(void)
 {
 	int rv;
+
+	/* Reuse the PDN of the already-connected AT#XNRFCLOUD CoAP connection for the download
+	 * socket too, so #XNRFCLOUDFOTA does not need its own <pdn_id> parameter.
+	 */
+	memfault_zephyr_fota_pdn_id_set(sm_nrf_cloud_pdn_id);
 
 	if (sm_fota_type == SM_FOTA_TYPE_APP) {
 		const char *saved_key = nrfcloud_fota_app_key_swap();
